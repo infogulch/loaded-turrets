@@ -10,7 +10,7 @@ player to assault enemy bases.
 
 This is pretty powerful, so in exchange it has some trade-offs:
 
-1. Ammo is added 1.5 seconds after the turret is placed. A practiced player can do
+1. Ammo is added 1 second after the turret is placed. A practiced player can do
    this faster.
 2. The recipe crafts quickly (0.5s) but burns an electronic circuit. (Think of
    it like you're jerry-rigging the brains of an inserter into the turret.) This

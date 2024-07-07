@@ -1,18 +1,7 @@
-global.insert_on_tick = {}
-global.pending_unit_tick = {}
-
-function mt()
-    setmetatable(global.insert_on_tick, {
-        __index = function(t, k)
-            local v = {}
-            t[k] = v
-            return v
-        end
-    })
-end
-
-script.on_load(mt)
-mt()
+---@class LTGlobal
+---@field insert_on_tick {[integer]:{entity:LuaEntity,unit_number:integer,items:ItemStackDefinition}}
+---@field pending_unit_tick {[integer]:integer}
+global = { insert_on_tick = {}, pending_unit_tick = {} }
 
 script.on_event(defines.events.on_tick,
     function(event)
@@ -32,9 +21,14 @@ script.on_event(defines.events.on_tick,
 script.on_event(defines.events.on_built_entity, function(event)
     local ammo_type, count = event["item"]["name"]:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-]x(%d+)$')
     if ammo_type then
-        local tick = event.tick + 90
+        local tick = event.tick + settings.global["loaded-turrets-load-delay-in-ticks"].value
+        local list = global.insert_on_tick[tick]
+        if not list then
+            list = {}
+            global.insert_on_tick[tick] = list
+        end
         global.pending_unit_tick[event.created_entity.unit_number] = tick
-        table.insert(global.insert_on_tick[tick], {
+        table.insert(list, {
             entity = event.created_entity,
             unit_number = event.created_entity.unit_number,
             items = { name = ammo_type, count = tonumber(count) * event.created_entity.prototype.automated_ammo_count }
@@ -43,10 +37,10 @@ script.on_event(defines.events.on_built_entity, function(event)
 end, { { filter = "turret" } })
 
 script.on_event(defines.events.on_player_mined_entity, function(event)
-    local tick = global.pending_unit_tick[event.entity.unit_number]
+    local unit_number = event.entity.unit_number
+    local tick = global.pending_unit_tick[unit_number]
     if not tick then return end
-    local unit_number = event.unit_number
-    local tasks = rawget(global.insert_on_tick, tick)
+    local tasks = global.insert_on_tick[tick]
     for i, task in pairs(tasks) do
         if task.entity.unit_number == unit_number then
             event.buffer.insert(task.items)

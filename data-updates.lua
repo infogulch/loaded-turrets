@@ -22,8 +22,8 @@ data:extend {
     type = "item",
     name = "loaded-gun-turret-piercing-rounds-magazine-x1",
     icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shifet = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },    icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
     },
     subgroup = "loaded-turret",
     order = "b[turret]-a[gun-turret]",
@@ -47,9 +47,9 @@ data:extend {
     type = "item",
     name = "loaded-gun-turret-piercing-rounds-magazine-x2",
     icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shifet = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },    icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .15, shift = { -1, 1.2 },     icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .15, shift = { -1, 1.2 },    icon_mipmaps = 4 },
     },
     subgroup = "loaded-turret",
     order = "b[turret]-a[gun-turret]",
