@@ -1,5 +1,5 @@
 ---@class LTGlobal
----@field insert_on_tick {[integer]:{entity:LuaEntity,unit_number:integer,items:ItemStackDefinition}}
+---@field insert_on_tick {[integer]:[{entity:LuaEntity,unit_number:integer,items:ItemStackDefinition}]}
 ---@field pending_unit_tick {[integer]:integer}
 global = { insert_on_tick = {}, pending_unit_tick = {} }
 
@@ -37,15 +37,15 @@ script.on_event(defines.events.on_built_entity, function(event)
 end, { { filter = "turret" } })
 
 script.on_event(defines.events.on_player_mined_entity, function(event)
-    local unit_number = event.entity.unit_number
+    local unit_number = event.entity.unit_number or 0
     local tick = global.pending_unit_tick[unit_number]
     if not tick then return end
     local tasks = global.insert_on_tick[tick]
     for i, task in pairs(tasks) do
-        if task.entity.unit_number == unit_number then
+        if task.unit_number == unit_number then
             event.buffer.insert(task.items)
             tasks[i] = nil
-            global.pending_unit_tick[event.entity.unit_number] = nil
+            global.pending_unit_tick[unit_number] = nil
             return
         end
     end
