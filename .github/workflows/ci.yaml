@@ -15,3 +15,8 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         path: 'loaded-turrets_*.zip'
+    - if: startsWith(github.ref, 'refs/tags/v')
+      run: fmtk publish
+      with:
+        env:
+          FACTORIO_UPLOAD_API_KEY: ${{ secrets.FACTORIO_UPLOAD_API_KEY }}
