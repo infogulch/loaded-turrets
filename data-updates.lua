@@ -1,6 +1,101 @@
-local aac = data.raw["ammo-turret"]["gun-turret"]["automated_ammo_count"]
+require "tools"
 
--- items
+---@type data.ItemPrototype[], data.RecipePrototype[], data.EntityPrototype[], data.TechnologyPrototype[]
+local items, recipes, entities, technologies = {}, {}, {}, {}
+
+do
+  local gunturret = data.raw["ammo-turret"]["gun-turret"]
+  local gunturreticon = proto_icon(gunturret)
+
+  local alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+  local ammo_names = { "firearm-magazine", "piercing-rounds-magazine", "uranium-rounds-magazine" }
+  local capacities = { gunturret.automated_ammo_count, gunturret.automated_ammo_count * 2 }
+
+  for ammoidx, ammoname in pairs(ammo_names) do
+    local ammo = data.raw["ammo"][ammoname]
+    local ammoicon = proto_icon(ammo)
+    local ammoord = alphabet.sub(ammoidx, ammoidx + 1) .. "[" .. ammo.name .. "]"
+
+    for capidx, cap in pairs(capacities) do
+      local name = "loaded-gun-turret-" .. ammo.name .. "-" .. cap
+      local localised_name = { "loaded-turrets.gun-turret-name", cap, { "item-name." .. ammo.name } }
+      local capord = alphabet.sub(capidx, capidx + 1) .. "[" .. cap .. "]"
+      local icons = {
+        merge({}, gunturreticon, { scale = .19, shift = { -1.2, -1.2 } }),
+        merge({}, ammoicon, { scale = .17, shift = { 1.2, 1.2 } }),
+        merge({}, ammoicon, { scale = .15, shift = { -1, 1.2 } }),
+      }
+      if capidx == 1 then
+        table.remove(icons, 3)
+      end
+
+      table.insert(items, {
+        type = "item",
+        name = name,
+        localised_name = localised_name,
+        localised_description = { "loaded-turrets.gun-turret-description" },
+        icons = icons,
+        subgroup = "loaded-turret",
+        order = ammoord .. "-" .. capord,
+        place_result = name,
+        stack_size = data.raw["item"]["gun-turret"].stack_size / 2,
+      } --[[ @as data.ItemPrototype ]])
+      table.insert(recipes, {
+        type = "recipe",
+        name = name,
+        localised_name = localised_name,
+        enabled = false,
+        energy_required = 0.5,
+        ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { ammo.name, cap } },
+        result = name,
+      } --[[ @as data.RecipePrototype ]])
+      table.insert(entities, merge({}, gunturret, {
+        name = name,
+        localised_name = localised_name,
+      } --[[ @as data.EntityPrototype ]]))
+    end
+  end
+end
+
+do
+  local mil2 = data.raw["technology"]["military-2"]
+  local mil3 = data.raw["technology"]["military-3"]
+  local gttechicon = proto_icon(data.raw["technology"]["gun-turret"])
+  local ammo1icon = proto_icon(data.raw["ammo"]["firearm-magazine"])
+  local ammo2icon = proto_icon(data.raw["ammo"]["piercing-rounds-magazine"])
+
+  local unlocks = map(recipes, function(r) return { type = "unlock-recipe", recipe = r.name } end)
+
+  technologies = {
+    {
+      type = "technology",
+      name = "loaded-turret",
+      unit = mil2.unit,
+      effects = slice(unlocks, 1, 1),
+      prerequisites = { "gun-turret", "military-2" },
+      icons = {
+        merge({}, gttechicon, { scale = 0.19, shift = { -3.5, -3.5 } }),
+        merge({}, ammo1icon, { scale = .5, shift = { 7, 10 } }),
+      },
+      order = "a-j-a",
+    },
+    {
+      type = "technology",
+      name = "loaded-turret-2",
+      unit = merge({}, mil3.unit, { count = mil3.unit.count / 2 }),
+      effects = slice(unlocks, 2),
+      prerequisites = { "loaded-turret", "military-3" },
+      icons = {
+        merge({}, gttechicon, { scale = 0.19, shift = { -3.5, -3.5 } }),
+        merge({}, ammo2icon, { scale = .5, shift = { 7, 10 } }),
+        merge({}, ammo2icon, { scale = .5, shift = { 0, 10 } }),
+      },
+      order = "a-j-a",
+    },
+  }
+end
+
 data:extend {
   {
     type = "item-subgroup",
@@ -8,194 +103,5 @@ data:extend {
     group = "combat",
     order = "gg",
   },
-  {
-    type = "item",
-    name = "loaded-gun-turret-firearm-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.firearm-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description", { "string-mod-setting.loaded-turrets-load-delay-string" } },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",       icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/firearm-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "a[firearm-magazine]-a[10]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-  {
-    type = "item",
-    name = "loaded-gun-turret-firearm-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.firearm-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description", { "string-mod-setting.loaded-turrets-load-delay-string" } },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",       icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/firearm-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/firearm-magazine.png", icon_size = 64, scale = .15, shift = { -1, 1.2 },    icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "a[firearm-magazine]-b[20]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-  {
-    type = "item",
-    name = "loaded-gun-turret-piercing-rounds-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.piercing-rounds-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description" },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "b[piercing-rounds-magazine]-a[10]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-  {
-    type = "item",
-    name = "loaded-gun-turret-piercing-rounds-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.piercing-rounds-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description" },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",               icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/piercing-rounds-magazine.png", icon_size = 64, scale = .15, shift = { -1, 1.2 },    icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "b[piercing-rounds-magazine]-b[20]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-  {
-    type = "item",
-    name = "loaded-gun-turret-uranium-rounds-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.uranium-rounds-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description" },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",              icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/uranium-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "c[uranium-rounds-magazine]-a[10]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-  {
-    type = "item",
-    name = "loaded-gun-turret-uranium-rounds-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.uranium-rounds-magazine" } },
-    localised_description = { "loaded-turrets.gun-turret-description" },
-    icons = {
-      { icon = "__base__/graphics/icons/gun-turret.png",              icon_size = 64, scale = .19, shift = { -1.2, -1.2 }, icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/uranium-rounds-magazine.png", icon_size = 64, scale = .17, shift = { 1.2, 1.2 },   icon_mipmaps = 4 },
-      { icon = "__base__/graphics/icons/uranium-rounds-magazine.png", icon_size = 64, scale = .15, shift = { -1, 1.2 },    icon_mipmaps = 4 },
-    },
-    subgroup = "loaded-turret",
-    order = "c[uranium-rounds-magazine]-b[20]",
-    place_result = "gun-turret",
-    stack_size = 50,
-  },
-}
-
--- recipes
-data:extend {
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-firearm-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.firearm-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "firearm-magazine", aac } },
-    result = "loaded-gun-turret-firearm-magazine-x1",
-  },
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-firearm-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.firearm-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "firearm-magazine", aac * 2 } },
-    result = "loaded-gun-turret-firearm-magazine-x2",
-  },
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-piercing-rounds-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.piercing-rounds-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "piercing-rounds-magazine", aac } },
-    result = "loaded-gun-turret-piercing-rounds-magazine-x1",
-  },
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-piercing-rounds-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.piercing-rounds-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "piercing-rounds-magazine", aac * 2 } },
-    result = "loaded-gun-turret-piercing-rounds-magazine-x2",
-  },
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-uranium-rounds-magazine-x1",
-    localised_name = { "loaded-turrets.gun-turret-name", aac, { "item-name.uranium-rounds-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "uranium-rounds-magazine", aac } },
-    result = "loaded-gun-turret-uranium-rounds-magazine-x1",
-  },
-  {
-    type = "recipe",
-    name = "loaded-gun-turret-uranium-rounds-magazine-x2",
-    localised_name = { "loaded-turrets.gun-turret-name", aac * 2, { "item-name.uranium-rounds-magazine" } },
-    enabled = false,
-    energy_required = 0.5,
-    ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { "uranium-rounds-magazine", aac * 2 } },
-    result = "loaded-gun-turret-uranium-rounds-magazine-x2",
-  },
-}
-
--- technologies
-data:extend {
-  {
-    type = "technology",
-    name = "loaded-turret",
-    unit = {
-      count = data.raw["technology"]["military-2"]["unit"]["count"],
-      time = data.raw["technology"]["military-2"]["unit"]["time"],
-      ingredients = {
-        { "automation-science-pack", 1 },
-        { "logistic-science-pack",   1 },
-      }
-    },
-    effects = {
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-firearm-magazine-x1" }
-    },
-    prerequisites = { "gun-turret", "military-2" },
-    icon = "__base__/graphics/technology/gun-turret.png", icon_size = 256, icon_mipmaps = 4,
-    order = "a-j-a",
-  },
-  {
-    type = "technology",
-    name = "loaded-turret-2",
-    unit = {
-      count = data.raw["technology"]["military-3"]["unit"]["count"],
-      time = data.raw["technology"]["military-3"]["unit"]["time"],
-      ingredients = {
-        { "automation-science-pack", 1 },
-        { "logistic-science-pack",   1 },
-        { "military-science-pack",   1 },
-      }
-    },
-    effects = {
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-firearm-magazine-x2" },
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-piercing-rounds-magazine-x1" },
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-piercing-rounds-magazine-x2" },
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-uranium-rounds-magazine-x1" },
-      { type = "unlock-recipe", recipe = "loaded-gun-turret-uranium-rounds-magazine-x2" },
-    },
-    prerequisites = { "loaded-turret", "military-3" },
-    icon = "__base__/graphics/technology/gun-turret.png", icon_size = 256, icon_mipmaps = 4,
-    order = "a-j-a",
-  },
+  table.unpack(merge({}, items, recipes, entities, technologies)),
 }

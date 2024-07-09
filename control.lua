@@ -11,26 +11,24 @@ end
 script.on_init(init)
 script.on_configuration_changed(init)
 
-script.on_event(defines.events.on_tick,
-    function(event)
-        local tasks = global.insert_on_tick[event.tick]
-        if not tasks then return end
-        for _, task in pairs(tasks) do
-            if task.entity.valid then
-                local actual = task.entity.insert(task.items)
-                if actual < task.items.count then
-                    task.items.count = task.items.count - actual
-                    task.entity.surface.spill_item_stack(task.entity.position, task.items)
-                end
+script.on_event(defines.events.on_tick, function(event)
+    local tasks = global.insert_on_tick[event.tick]
+    if not tasks then return end
+    for _, task in pairs(tasks) do
+        if task.entity.valid then
+            local actual = task.entity.insert(task.items)
+            if actual < task.items.count then
+                task.items.count = task.items.count - actual
+                task.entity.surface.spill_item_stack(task.entity.position, task.items)
             end
-            global.pending_unit_tick[task.unit_number] = nil
         end
-        global.insert_on_tick[event.tick] = nil
+        global.pending_unit_tick[task.unit_number] = nil
     end
-)
+    global.insert_on_tick[event.tick] = nil
+end)
 
-script.on_event(defines.events.on_built_entity, function(event)
-    if not event.item then return end
+function built(event)
+    local ammo_type, count = event.stack.name:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-](%d+)$')
     if ammo_type then
         local tick = event.tick + settings.global["loaded-turrets-load-delay-in-ticks"].value
         local list = global.insert_on_tick[tick]
@@ -42,12 +40,15 @@ script.on_event(defines.events.on_built_entity, function(event)
         table.insert(list, {
             entity = event.created_entity,
             unit_number = event.created_entity.unit_number,
-            items = { name = ammo_type, count = tonumber(count) * event.created_entity.prototype.automated_ammo_count }
+            items = { name = ammo_type, count = tonumber(count) }
         })
     end
-end, { { filter = "turret" } })
+end
 
-script.on_event(defines.events.on_player_mined_entity, function(event)
+script.on_event(defines.events.on_built_entity, built, { { filter = "turret" } })
+script.on_event(defines.events.on_robot_built_entity, built, { { filter = "turret" } })
+
+function mined(event)
     local unit_number = event.entity.unit_number or 0
     local tick = global.pending_unit_tick[unit_number]
     if not tick then return end
@@ -60,4 +61,7 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
             return
         end
     end
-end, { { filter = "turret" } })
+end
+
+script.on_event(defines.events.on_player_mined_entity, mined, { { filter = "turret" } })
+script.on_event(defines.events.on_robot_mined_entity, mined, { { filter = "turret" } })

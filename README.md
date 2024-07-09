@@ -10,6 +10,8 @@ This is pretty powerful, so in exchange it has a couple trade-offs:
    it like you're jerry-rigging the brains of an inserter into the turret.) This
    means you have another resource to manage in an excursion away from your base.
 
-There are two technologies: Loaded Turrets 1 and Loaded Turrets 2. The first
-adds a recipe with 10 magazines. The second adds recipes for piercing magazines
-and 20 magazine capacity.
+![Loaded turrets technology](assets/tech1.png)
+
+![Loaded turrets 2 technology](assets/tech2.png)
+
+![aftermath](assets/aftermath.png)

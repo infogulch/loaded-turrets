@@ -1,11 +1,11 @@
 {
     "name": "loaded-turrets",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "title": "Loaded Turrets",
     "author": "infogulch",
     "factorio_version": "1.1",
     "dependencies": [
         "base >= 1.1"
     ],
-    "description": "This mod adds recipes to pre-fill turrets with ammo so they're ready to fire soon after they are placed."
+    "description": "Recipes to pre-fill turrets with ammo so they're ready to fire soon after being placed."
 }

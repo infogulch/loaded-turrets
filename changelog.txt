@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2024-07-09
+  Changes:
+    - Fix multiplayer desync and potential crash
+    - Make turrets work with bots, blueprints, and picker
+    - Reduce stack size to half of Gun turret stack size
+    - Rename internal item ids as part of refactoring (sorry)
+    - Add custom technology icons, add screenshots, and update thumbnail
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2024-07-09
   Changes:
