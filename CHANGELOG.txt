@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
-Date: ***
+Date: 2024-07-09
   Changes:
     - Spill magazines on ground if turret inventory full
     - Add game setting for insertion delay
