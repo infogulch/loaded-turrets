@@ -1,7 +1,15 @@
 ---@class LTGlobal
 ---@field insert_on_tick {[integer]:[{entity:LuaEntity,unit_number:integer,items:ItemStackDefinition}]}
 ---@field pending_unit_tick {[integer]:integer}
-global = { insert_on_tick = {}, pending_unit_tick = {} }
+global = global
+
+local function init()
+    global.insert_on_tick = global.insert_on_tick or {}
+    global.pending_unit_tick = global.pending_unit_tick or {}
+end
+
+script.on_init(init)
+script.on_configuration_changed(init)
 
 script.on_event(defines.events.on_tick,
     function(event)
@@ -22,7 +30,7 @@ script.on_event(defines.events.on_tick,
 )
 
 script.on_event(defines.events.on_built_entity, function(event)
-    local ammo_type, count = event["item"]["name"]:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-]x(%d+)$')
+    if not event.item then return end
     if ammo_type then
         local tick = event.tick + settings.global["loaded-turrets-load-delay-in-ticks"].value
         local list = global.insert_on_tick[tick]
