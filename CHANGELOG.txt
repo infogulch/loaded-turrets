@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: ***
+  Changes:
+    - Spill magazines on ground if turret inventory full
+    - Add game setting for insertion delay
+    - Add recipes for uranium rounds magazines
+    - Technology requires military 2 & 3 instead of 1 & 2
+    - Add en locale descriptions for techs, items, recipes
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2024-07-08
   Changes:

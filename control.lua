@@ -5,12 +5,15 @@ global = { insert_on_tick = {}, pending_unit_tick = {} }
 
 script.on_event(defines.events.on_tick,
     function(event)
-        local tasks = rawget(global.insert_on_tick, event.tick)
+        local tasks = global.insert_on_tick[event.tick]
         if not tasks then return end
         for _, task in pairs(tasks) do
             if task.entity.valid then
-                task.entity.insert(task.items)
-                -- TODO: what if inserted less than count?
+                local actual = task.entity.insert(task.items)
+                if actual < task.items.count then
+                    task.items.count = task.items.count - actual
+                    task.entity.surface.spill_item_stack(task.entity.position, task.items)
+                end
             end
             global.pending_unit_tick[task.unit_number] = nil
         end
