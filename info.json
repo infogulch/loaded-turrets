@@ -7,5 +7,5 @@
     "dependencies": [
         "base >= 1.1"
     ],
-    "description": "Recipes to pre-fill turrets with ammo so they're ready to fire soon after being placed."
+    "description": "Recipes to craft turrets with pre-filled ammo which are ready to fire soon after being placed."
 }

@@ -27,6 +27,7 @@ script.on_event(defines.events.on_tick, function(event)
     global.insert_on_tick[event.tick] = nil
 end)
 
+---@param event EventData.on_built_entity|EventData.on_robot_built_entity
 function built(event)
     local ammo_type, count = event.stack.name:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-](%d+)$')
     if ammo_type then
@@ -48,6 +49,7 @@ end
 script.on_event(defines.events.on_built_entity, built, { { filter = "turret" } })
 script.on_event(defines.events.on_robot_built_entity, built, { { filter = "turret" } })
 
+---@param event EventData.on_player_mined_entity|EventData.on_robot_mined_entity
 function mined(event)
     local unit_number = event.entity.unit_number or 0
     local tick = global.pending_unit_tick[unit_number]
