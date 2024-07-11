@@ -27,20 +27,23 @@ script.on_event(defines.events.on_tick, function(event)
     global.insert_on_tick[event.tick] = nil
 end)
 
----@param event EventData.on_built_entity|EventData.on_robot_built_entity
+---@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_entity_cloned
 function built(event)
-    local ammo_type, count = event.stack.name:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-](%d+)$')
+    local entity = event.created_entity or event.destination
+    local ammo_type, count = entity.name:match('^loaded[-]gun[-]turret[-](.*[-]magazine)[-](%d+)$')
     if ammo_type then
+        -- don't insert into a cloned entity unless the source is also pending
+        if event.name == defines.events.on_entity_cloned and not global.pending_unit_tick[event.source.unit_number] then return end
         local tick = event.tick + settings.global["loaded-turrets-load-delay-in-ticks"].value
         local list = global.insert_on_tick[tick]
         if not list then
             list = {}
             global.insert_on_tick[tick] = list
         end
-        global.pending_unit_tick[event.created_entity.unit_number] = tick
+        global.pending_unit_tick[entity.unit_number] = tick
         table.insert(list, {
-            entity = event.created_entity,
-            unit_number = event.created_entity.unit_number,
+            entity = entity,
+            unit_number = entity.unit_number,
             items = { name = ammo_type, count = tonumber(count) }
         })
     end
@@ -48,6 +51,7 @@ end
 
 script.on_event(defines.events.on_built_entity, built, { { filter = "turret" } })
 script.on_event(defines.events.on_robot_built_entity, built, { { filter = "turret" } })
+script.on_event(defines.events.on_entity_cloned, built, { { filter = "turret" } })
 
 ---@param event EventData.on_player_mined_entity|EventData.on_robot_mined_entity
 function mined(event)
