@@ -4,7 +4,7 @@ function set:new(elements)
     local s = {}
     setmetatable(s, self)
     self.__index = self
-    s:add(elements)
+    if elements then s:add(elements) end
     return s
 end
 
