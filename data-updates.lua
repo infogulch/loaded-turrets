@@ -1,30 +1,43 @@
 require "tools"
 
----@type data.ItemPrototype[], data.RecipePrototype[], data.EntityPrototype[], data.TechnologyPrototype[]
-local items, recipes, entities, technologies = {}, {}, {}, {}
+---@type data.ItemSubGroup[], data.ItemPrototype[], data.RecipePrototype[], data.EntityPrototype[], data.TechnologyPrototype[]
+local subgroups, items, recipes, entities, technologies = {}, {}, {}, {}, {}
 
-do
-  local gunturret = data.raw["ammo-turret"]["gun-turret"]
-  local gunturreticon = proto_icon(gunturret)
+for _, turret in pairs(data.raw["ammo-turret"]) do
+  local turretitem = lookupitem(turret.name)
 
-  local alphabet = "abcdefghijklmnopqrstuvwxyz"
+  local caps = {}
+  for i, c in pairs({ turret.automated_ammo_count, turret.automated_ammo_count * 2 }) do
+    local order = ("ab"):sub(i, i) .. "[" .. c .. "]"
+    local subgroup = "loaded-turrets_" .. turret.name .. "_" .. c
+    table.insert(caps, {
+      count = c,
+      order = order,
+      subgroup = subgroup,
+    })
+    table.insert(subgroups, {
+      type = "item-subgroup",
+      group = "combat",
+      name = subgroup,
+      order = "gg-" .. turretitem.order .. "-" .. order,
+    } --[[ @as data.ItemSubGroup ]])
+  end
 
-  local ammo_names = { "firearm-magazine", "piercing-rounds-magazine", "uranium-rounds-magazine" }
-  local capacities = { gunturret.automated_ammo_count, gunturret.automated_ammo_count * 2 }
+  for _, ammo in pairs(data.raw["ammo"]) do
+    if not compatible_turret_ammo(turret, ammo) then goto continue end
 
-  for ammoidx, ammoname in pairs(ammo_names) do
-    local ammo = data.raw["ammo"][ammoname]
-    local ammoicon = proto_icon(ammo)
-    local ammoord = alphabet.sub(ammoidx, ammoidx + 1) .. "[" .. ammo.name .. "]"
+    for capidx, cap in ipairs(caps) do
+      local name = "loaded_" .. turret.name .. "_" .. ammo.name .. "_" .. cap.count
+      local localised_name = { "loaded-turrets.name", { "entity-name." .. turret.name }, cap.count, { "item-name." .. ammo.name } }
+      local order = turretitem.order .. "-" .. ammo.order .. "-" .. cap.order
 
-    for capidx, cap in pairs(capacities) do
-      local name = "loaded-gun-turret-" .. ammo.name .. "-" .. cap
-      local localised_name = { "loaded-turrets.gun-turret-name", cap, { "item-name." .. ammo.name } }
-      local capord = alphabet.sub(capidx, capidx + 1) .. "[" .. cap .. "]"
+      local turreticon = proto_icon(turret)
+      local ammoicon = proto_icon(ammo)
+      local ratio = turreticon.icon_size / ammoicon.icon_size
       local icons = {
-        util.merge { gunturreticon, { scale = .19, shift = { -1.2, -1.2 } } },
-        util.merge { ammoicon, { scale = .17, shift = { 1.2, 1.2 } } },
-        util.merge { ammoicon, { scale = .15, shift = { -1, 1.2 } } },
+        util.merge { turreticon, { scale = .19, shift = { -1.2, -1.2 } } },
+        util.merge { ammoicon, { scale = .17 * ratio, shift = { 1.2 * ratio, 1.2 * ratio } } },
+        util.merge { ammoicon, { scale = .15 * ratio, shift = { -1 * ratio, 1.2 * ratio } } },
       }
       if capidx == 1 then
         table.remove(icons, 3)
@@ -34,10 +47,10 @@ do
         type = "item",
         name = name,
         localised_name = localised_name,
-        localised_description = { "loaded-turrets.gun-turret-description" },
+        localised_description = { "loaded-turrets.description", { "entity." .. turret.name } },
         icons = icons,
-        subgroup = "loaded-turret",
-        order = ammoord .. "-" .. capord,
+        subgroup = cap.subgroup,
+        order = order,
         place_result = name,
         stack_size = data.raw["item"]["gun-turret"].stack_size / 2,
       } --[[ @as data.ItemPrototype ]])
@@ -45,16 +58,19 @@ do
         type = "recipe",
         name = name,
         localised_name = localised_name,
+        order = order,
         enabled = false,
         energy_required = 0.5,
-        ingredients = { { "gun-turret", 1 }, { "electronic-circuit", 1 }, { ammo.name, cap } },
+        ingredients = { { turretitem.name, 1 }, { "electronic-circuit", 1 }, { ammo.name, cap.count } },
         result = name,
       } --[[ @as data.RecipePrototype ]])
-      table.insert(entities, util.merge { gunturret, {
+      table.insert(entities, util.merge { turret, {
         name = name,
         localised_name = localised_name,
+        order = order,
       } })
     end
+    ::continue::
   end
 end
 
@@ -99,11 +115,4 @@ do
   }
 end
 
-data:extend(concat { items, recipes, entities, technologies,
-  { {
-    type = "item-subgroup",
-    name = "loaded-turret",
-    group = "combat",
-    order = "gg",
-  } }
-})
+data:extend(concat { subgroups, items, recipes, entities, technologies })
