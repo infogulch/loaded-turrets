@@ -1,6 +1,6 @@
 local Set = require("set")
 
----@type {[string]: {[string]:boolean}}
+---@type {[string]: {[string]:true}}
 local items_by_placeresult = {}
 for _, i in pairs(data.raw["item"]) do
   if i.place_result then
@@ -13,7 +13,7 @@ for _, i in pairs(data.raw["item"]) do
   end
 end
 
----@type {[string]: {[string]:boolean}}
+---@type {[string]: {[string]:true}}
 local techs_by_recipe = {}
 for _, tech in pairs(data.raw["technology"]) do
   for _, e in pairs(tech.effects or {}) do
@@ -28,7 +28,7 @@ for _, tech in pairs(data.raw["technology"]) do
   end
 end
 
----@type {[string]: {[string]:boolean}}
+---@type {[string]: {[string]:true}}
 local ammo_names_by_category = {}
 for _, ammo in pairs(data.raw["ammo"]) do
   for _, t in pairs(ammo.ammo_type[1] and ammo.ammo_type or { ammo.ammo_type }) do
@@ -54,7 +54,7 @@ do
   end
 end
 
----@type {[string]: {[string]:boolean}}
+---@type {[string]: {[string]:true}}
 local tech_transitive_prerequisites = {}
 do
   function tp(name)
@@ -178,22 +178,32 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
     } --[[ @as data.ItemSubGroup ]])
   end
 
-  local mil2 = data.raw["technology"]["military-2"]
-  local mil3 = data.raw["technology"]["military-3"]
+  local mil2, mil3 = data.raw["technology"]["military-2"], data.raw["technology"]["military-3"]
   local turrettech = data.raw["technology"][first(techs_by_recipe[turretitem.name] or {})]
   local turrettechicon = proto_icon(turrettech or turretitem)
-  turrettech = turrettech or mil2
   local ammo1icon = proto_icon(ammos[1])
   local ammo2icon = proto_icon((ammos[2] or ammos[1]))
 
+  local pre1, unit1
+  if turrettech then
+    pre1 = { turrettech.name }
+    unit1 = turrettech.unit
+    if not tech_transitive_prerequisites[turrettech.name][mil2.name] then
+      table.insert(pre1, mil2.name)
+      unit1 = util.merge { unit1, mil2.unit, { count = math.max(mil2.unit.count, unit1.count) } }
+    end
+  else
+    pre1 = { mil2.name }
+    unit1 = mil2.unit
+  end
   table.insert(technologies, {
     type = "technology",
     name = "loaded-turrets_" .. turret.name,
     localised_name = { "loaded-turrets.tech-name", { "entity-name." .. turret.name } },
     localised_description = { "loaded-turrets.tech-description", { "entity-name." .. turret.name }, { "ammo-category-name." .. ammocategory } },
-    unit = util.merge { turrettech.unit, mil2.unit, { count = mil2.unit.count } },
+    unit = unit1,
+    prerequisites = pre1,
     effects = { table.remove(techeffects, 1) },
-    prerequisites = { turrettech.name, mil3.name }, -- TODO: Trim prerequisites if turrettech subsumes mil tech
     icons = fix_icons {
       util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },
       util.merge { ammo1icon, { scale = .12, shift = { .15, .15 } } },
@@ -201,14 +211,19 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
     order = "a-j-a",
   })
 
+  local pre2, unit2 = { "loaded-turrets_" .. turret.name }, util.merge { unit1, { count = unit1.count * 2 } }
+  if turrettech and not tech_transitive_prerequisites[turrettech.name][mil3.name] then
+    table.insert(pre2, mil3.name)
+    unit2 = util.merge { unit2, mil3.unit, { count = math.max(unit2.count, mil3.unit.count / 2) } }
+  end
   table.insert(technologies, {
     type = "technology",
     name = "loaded-turrets_" .. turret.name .. "-2",
     localised_name = { "loaded-turrets.tech-name-2", { "entity-name." .. turret.name } },
     localised_description = { "loaded-turrets.tech-description", { "entity-name." .. turret.name }, { "ammo-category-name." .. ammocategory } },
-    unit = util.merge { turrettech.unit or {}, mil3.unit, { count = mil3.unit.count / 2 } },
+    unit = unit2,
+    prerequisites = pre2,
     effects = techeffects,
-    prerequisites = { mil3.name, "loaded-turrets_" .. turret.name },
     icons = fix_icons {
       util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },
       util.merge { ammo2icon, { scale = .12, shift = { .15, .15 } } },
