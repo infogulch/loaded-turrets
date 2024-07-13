@@ -57,21 +57,33 @@ end
 ---@type {[string]: {[string]:true}}
 local tech_transitive_prerequisites = {}
 do
-  function tp(name)
-    local pre = tech_transitive_prerequisites[name]
-    if pre then return pre end
-    local p = data.raw["technology"][name].prerequisites or {}
-    pre = Set:new(p)
-    for _, t in pairs(p) do
-      pre:add(tp(t):elements())
+  ---@type data.TechnologyPrototype[]
+  local techs = {}
+  for _, t in pairs(data.raw["technology"]) do
+    table.insert(techs, t)
+  end
+  -- it would be nice if this ordered techs so prerequisites generally came
+  -- first, but alas .order field is not maintained so you get quadratic perf yw
+  table.sort(techs, function(a, b) return a.order < b.order end)
+  local scans, steps = 0, 0
+  while #techs > 0 do
+    scans = scans + 1
+    for idx, tech in pairs(techs) do
+      steps = steps + 1
+      local prereqs = Set:new(tech.prerequisites)
+      for _, pname in pairs(tech.prerequisites or {}) do
+        local pre = tech_transitive_prerequisites[pname]
+        if not pre then goto continue end
+        for p in pairs(pre) do
+          prereqs:add { p }
+        end
+      end
+      tech_transitive_prerequisites[tech.name] = prereqs
+      table.remove(techs, idx)
+      ::continue::
     end
-    tech_transitive_prerequisites[name] = pre
-    return pre
   end
-
-  for tech in pairs(data.raw["technology"]) do
-    tp(tech)
-  end
+  log("calculated prerequisites in " .. scans .. " scans and " .. steps .. " steps")
 end
 
 -- Extract the IconData fields from a prototype's embedded icon fields
