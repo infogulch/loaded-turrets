@@ -121,7 +121,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
     local subgroup = "loaded-turrets_" .. turret.name .. "_" .. count
 
     for _, ammo in pairs(ammos) do
-      local name = "loaded_" .. turret.name .. "_" .. ammo.name .. "_" .. count
+      local name = "loaded-turrets_" .. turret.name .. "_" .. ammo.name .. "_" .. count
       local localised_name = { "loaded-turrets.name", { "entity-name." .. turret.name }, count, { "item-name." .. ammo.name } }
       local order = turretitem.order .. "-" .. ammo.order .. "-" .. countorder
 
@@ -130,7 +130,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
       local icons = fix_icons {
         util.merge { turreticon, { scale = .19, shift = { -0.1, -0.1 } } },
         util.merge { ammoicon, { scale = .17, shift = { .2, .2 } } },
-        util.merge { ammoicon, { scale = .15, shift = { -.05, .2 } } },
+        util.merge { ammoicon, { scale = .17, shift = { -.05, .2 } } },
       }
       if countidx == 1 then
         table.remove(icons, 3)
@@ -192,7 +192,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
     localised_name = { "loaded-turrets.tech-name", { "entity-name." .. turret.name } },
     localised_description = { "loaded-turrets.tech-description", { "entity-name." .. turret.name }, { "ammo-category-name." .. ammocategory } },
     unit = util.merge { turrettech.unit, mil2.unit, { count = mil2.unit.count } },
-    effects = { table.remove(techeffects) },
+    effects = { table.remove(techeffects, 1) },
     prerequisites = { turrettech.name, mil3.name }, -- TODO: Trim prerequisites if turrettech subsumes mil tech
     icons = fix_icons {
       util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },

@@ -30,7 +30,7 @@ end)
 ---@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_entity_cloned
 function built(event)
     local entity = event.created_entity or event.destination
-    local ammo_type, count = entity.name:match('^loaded_.*_(.*)_(%d+)$')
+    local ammo_type, count = entity.name:match('^loaded-turrets_.*_(.*)_(%d+)$')
     if ammo_type then
         -- don't insert into a cloned entity unless the source is also pending
         if event.name == defines.events.on_entity_cloned and not global.pending_unit_tick[event.source.unit_number] then return end
