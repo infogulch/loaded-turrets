@@ -145,7 +145,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
         subgroup = subgroup,
         order = order,
         place_result = name,
-        stack_size = data.raw["item"]["gun-turret"].stack_size / 2,
+        stack_size = turretitem.stack_size / 2,
       } --[[ @as data.ItemPrototype ]])
 
       table.insert(recipes, {
@@ -183,6 +183,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
   local turrettechicon = proto_icon(turrettech or turretitem)
   local ammo1icon = proto_icon(ammos[1])
   local ammo2icon = proto_icon((ammos[2] or ammos[1]))
+  local techorder = (turrettech and turrettech.order) or "a-j-a"
 
   local pre1, unit1
   if turrettech then
@@ -208,7 +209,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
       util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },
       util.merge { ammo1icon, { scale = .12, shift = { .15, .15 } } },
     },
-    order = "a-j-a",
+    order = techorder .. "-" .. turretitem.order .. "-lt1",
   })
 
   local pre2, unit2 = { "loaded-turrets_" .. turret.name }, util.merge { unit1, { count = unit1.count * 2 } }
@@ -229,7 +230,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
       util.merge { ammo2icon, { scale = .12, shift = { .15, .15 } } },
       util.merge { ammo2icon, { scale = .12, shift = { 0, .15 } } },
     },
-    order = "a-j-a",
+    order = techorder .. "-" .. turretitem.order .. "-lt2",
   })
 
   ::continue::
