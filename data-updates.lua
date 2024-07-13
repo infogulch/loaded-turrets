@@ -64,7 +64,7 @@ do
   end
   -- it would be nice if this ordered techs so prerequisites generally came
   -- first, but alas .order field is not maintained so you get quadratic perf yw
-  table.sort(techs, function(a, b) return a.order < b.order end)
+  table.sort(techs, function(a, b) return (a.order or "") < (b.order or "") end)
   local scans, steps = 0, 0
   while #techs > 0 do
     scans = scans + 1
