@@ -1,11 +1,11 @@
 local set = {}
 
 function set:new(elements)
-    local s = {}
-    setmetatable(s, self)
+    local res = {}
+    setmetatable(res, self)
     self.__index = self
-    if elements then s:add(elements) end
-    return s
+    if elements then res:add(elements) end
+    return res
 end
 
 function set:has(elements)
@@ -29,6 +29,14 @@ function set:is_empty()
     return next(self) == nil
 end
 
+function set:elements()
+    local res = {}
+    for k, _ in pairs(self) do
+        table.insert(res, k)
+    end
+    return res
+end
+
 function set:intersection(others)
     local res = set:new {}
     for k in pairs(self) do
@@ -37,6 +45,14 @@ function set:intersection(others)
         end
         res[k] = true
         ::continue::
+    end
+    return res
+end
+
+function set:union(others)
+    local res = set:new(self:elements())
+    for _, s in pairs(others) do
+        res:add(s:elements())
     end
     return res
 end

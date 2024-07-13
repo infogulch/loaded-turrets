@@ -29,15 +29,48 @@ for _, tech in pairs(data.raw["technology"]) do
 end
 
 ---@type {[string]: {[string]:boolean}}
-local ammo_by_category = {}
+local ammo_names_by_category = {}
 for _, ammo in pairs(data.raw["ammo"]) do
   for _, t in pairs(ammo.ammo_type[1] and ammo.ammo_type or { ammo.ammo_type }) do
-    local set = ammo_by_category[t.category]
+    local set = ammo_names_by_category[t.category]
     if not set then
       set = Set:new()
-      ammo_by_category[t.category] = set
+      ammo_names_by_category[t.category] = set
     end
     set:add { ammo.name }
+  end
+end
+
+---@type {[string]: data.AmmoItemPrototype[]}
+local ammo_by_category = {}
+do
+  for name, ammos in pairs(ammo_names_by_category) do
+    local cat = {}
+    for ammoname in pairs(ammos) do
+      table.insert(cat, data.raw["ammo"][ammoname])
+    end
+    table.sort(cat, function(a1, a2) return a1.order < a2.order end)
+    ammo_by_category[name] = cat
+  end
+end
+
+---@type {[string]: {[string]:boolean}}
+local tech_transitive_prerequisites = {}
+do
+  function tp(name)
+    local pre = tech_transitive_prerequisites[name]
+    if pre then return pre end
+    local p = data.raw["technology"][name].prerequisites or {}
+    pre = Set:new(p)
+    for _, t in pairs(p) do
+      pre:add(tp(t):elements())
+    end
+    tech_transitive_prerequisites[name] = pre
+    return pre
+  end
+
+  for tech in pairs(data.raw["technology"]) do
+    tp(tech)
   end
 end
 
@@ -53,16 +86,24 @@ function proto_icon(proto)
   }
 end
 
-function first(tbl)
-  return pairs(tbl)(tbl)
+---Fixes icon scale and shift to be sane
+---@param icons data.IconData[]
+---@return data.IconData[]
+function fix_icons(icons)
+  local first = icons[1]
+  local res = {}
+  local size = first.icon_size * (first.scale or 1)
+  for _, icon in pairs(icons) do
+    local ratio = first.icon_size / icon.icon_size
+    if icon.scale then icon.scale = icon.scale * ratio end
+    if icon.shift then icon.shift = { icon.shift[1] * size, icon.shift[2] * size } end
+    table.insert(res, icon)
+  end
+  return res
 end
 
-function keys(tbl)
-  local ret = {}
-  for k, _ in pairs(tbl) do
-    table.insert(ret, k)
-  end
-  return ret
+function first(tbl)
+  return pairs(tbl)(tbl)
 end
 
 ---@type data.ItemSubGroup[], data.ItemPrototype[], data.RecipePrototype[], data.EntityPrototype[], data.TechnologyPrototype[]
@@ -72,28 +113,24 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
   local turretitem = data.raw["item"][first(items_by_placeresult[turret.name])]
   local _, ammocategory = first(turret.attack_parameters.ammo_categories or
     { turret.attack_parameters.ammo_category or turret.attack_parameters.ammo_type.category })
-  local ammonames = keys(ammo_by_category[ammocategory])
-  table.sort(ammonames, function(a, b) return data.raw["ammo"][a].order < data.raw["ammo"][b].order end)
+  local ammos = ammo_by_category[ammocategory]
   local techeffects = {}
 
   for countidx, count in pairs({ turret.automated_ammo_count, turret.automated_ammo_count * 2 }) do
     local countorder = ("ab"):sub(countidx, countidx) .. "[" .. count .. "]"
     local subgroup = "loaded-turrets_" .. turret.name .. "_" .. count
 
-    for _, ammoname in pairs(ammonames) do
-      local ammo = data.raw["ammo"][ammoname]
-
+    for _, ammo in pairs(ammos) do
       local name = "loaded_" .. turret.name .. "_" .. ammo.name .. "_" .. count
       local localised_name = { "loaded-turrets.name", { "entity-name." .. turret.name }, count, { "item-name." .. ammo.name } }
       local order = turretitem.order .. "-" .. ammo.order .. "-" .. countorder
 
       local turreticon = proto_icon(turretitem)
       local ammoicon = proto_icon(ammo)
-      local ratio = turreticon.icon_size / ammoicon.icon_size
-      local icons = {
-        util.merge { turreticon, { scale = .19, shift = { -1.2, -1.2 } } },
-        util.merge { ammoicon, { scale = .17 * ratio, shift = { 1.2 * ratio, 1.2 * ratio } } },
-        util.merge { ammoicon, { scale = .15 * ratio, shift = { -1 * ratio, 1.2 * ratio } } },
+      local icons = fix_icons {
+        util.merge { turreticon, { scale = .19, shift = { -0.1, -0.1 } } },
+        util.merge { ammoicon, { scale = .17, shift = { .2, .2 } } },
+        util.merge { ammoicon, { scale = .15, shift = { -.05, .2 } } },
       }
       if countidx == 1 then
         table.remove(icons, 3)
@@ -143,13 +180,12 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
 
   local mil2 = data.raw["technology"]["military-2"]
   local mil3 = data.raw["technology"]["military-3"]
-  local turrettech = data.raw["technology"][first(techs_by_recipe[turretitem.name] or {})] or
-      data.raw["technology"]["gun-turret"]
-  local turrettechicon = proto_icon(turrettech)
-  local ammo1icon = proto_icon(data.raw["ammo"][table.remove(ammonames, 1)])
-  local ammo2icon = proto_icon(data.raw["ammo"][table.remove(ammonames, 1)]) or ammo1icon
+  local turrettech = data.raw["technology"][first(techs_by_recipe[turretitem.name] or {})]
+  local turrettechicon = proto_icon(turrettech or turretitem)
+  turrettech = turrettech or mil2
+  local ammo1icon = proto_icon(ammos[1])
+  local ammo2icon = proto_icon((ammos[2] or ammos[1]))
 
-  local ratio1 = ammo1icon.icon_size / turrettechicon.icon_size
   table.insert(technologies, {
     type = "technology",
     name = "loaded-turrets_" .. turret.name,
@@ -157,27 +193,26 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
     localised_description = { "loaded-turrets.tech-description", { "entity-name." .. turret.name }, { "ammo-category-name." .. ammocategory } },
     unit = util.merge { turrettech.unit, mil2.unit, { count = mil2.unit.count } },
     effects = { table.remove(techeffects) },
-    prerequisites = { turrettech.name, mil2.name }, -- TODO: Trim prerequisites if turrettech subsumes mil tech
-    icons = {
-      util.merge { turrettechicon, { scale = 0.19, shift = { -3.5, -3.5 } } },
-      util.merge { ammo1icon, { scale = .5 * ratio1, shift = { 7 * ratio1, 10 * ratio1 } } },
+    prerequisites = { turrettech.name, mil3.name }, -- TODO: Trim prerequisites if turrettech subsumes mil tech
+    icons = fix_icons {
+      util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },
+      util.merge { ammo1icon, { scale = .12, shift = { .15, .15 } } },
     },
     order = "a-j-a",
   })
 
-  local ratio2 = ammo2icon.icon_size / turrettechicon.icon_size
   table.insert(technologies, {
     type = "technology",
     name = "loaded-turrets_" .. turret.name .. "-2",
     localised_name = { "loaded-turrets.tech-name-2", { "entity-name." .. turret.name } },
     localised_description = { "loaded-turrets.tech-description", { "entity-name." .. turret.name }, { "ammo-category-name." .. ammocategory } },
-    unit = util.merge { turrettech.unit, mil3.unit, { count = mil3.unit.count / 2 } },
+    unit = util.merge { turrettech.unit or {}, mil3.unit, { count = mil3.unit.count / 2 } },
     effects = techeffects,
     prerequisites = { mil3.name, "loaded-turrets_" .. turret.name },
-    icons = {
-      util.merge { turrettechicon, { scale = 0.19, shift = { -3.5, -3.5 } } },
-      util.merge { ammo2icon, { scale = .5 * ratio2, shift = { 7 * ratio2, 10 * ratio2 } } },
-      util.merge { ammo2icon, { scale = .5 * ratio2, shift = { 0, 10 * ratio2 } } },
+    icons = fix_icons {
+      util.merge { turrettechicon, { scale = 0.19, shift = { 0, -0.1 } } },
+      util.merge { ammo2icon, { scale = .12, shift = { .15, .15 } } },
+      util.merge { ammo2icon, { scale = .12, shift = { 0, .15 } } },
     },
     order = "a-j-a",
   })
