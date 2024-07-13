@@ -1,0 +1,18 @@
+{
+    "entity": [
+        [ "loaded-gun-turret-firearm-magazine-10", "loaded-turrets_gun-turret_firearm-magazine_10" ],
+        [ "loaded-gun-turret-firearm-magazine-20", "loaded-turrets_gun-turret_firearm-magazine_20" ],
+        [ "loaded-gun-turret-piercing-rounds-magazine-10", "loaded-turrets_gun-turret_piercing-rounds-magazine_10" ],
+        [ "loaded-gun-turret-piercing-rounds-magazine-20", "loaded-turrets_gun-turret_piercing-rounds-magazine_20" ],
+        [ "loaded-gun-turret-uranium-rounds-magazine-10", "loaded-turrets_gun-turret_uranium-rounds-magazine_10" ],
+        [ "loaded-gun-turret-uranium-rounds-magazine-20", "loaded-turrets_gun-turret_uranium-rounds-magazine_20" ]
+    ],
+    "item": [
+        [ "loaded-gun-turret-firearm-magazine-10", "loaded-turrets_gun-turret_firearm-magazine_10" ],
+        [ "loaded-gun-turret-firearm-magazine-20", "loaded-turrets_gun-turret_firearm-magazine_20" ],
+        [ "loaded-gun-turret-piercing-rounds-magazine-10", "loaded-turrets_gun-turret_piercing-rounds-magazine_10" ],
+        [ "loaded-gun-turret-piercing-rounds-magazine-20", "loaded-turrets_gun-turret_piercing-rounds-magazine_20" ],
+        [ "loaded-gun-turret-uranium-rounds-magazine-10", "loaded-turrets_gun-turret_uranium-rounds-magazine_10" ],
+        [ "loaded-gun-turret-uranium-rounds-magazine-20", "loaded-turrets_gun-turret_uranium-rounds-magazine_20" ]
+    ]
+}
