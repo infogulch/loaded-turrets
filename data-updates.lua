@@ -57,33 +57,46 @@ end
 ---@type {[string]: {[string]:true}}
 local tech_transitive_prerequisites = {}
 do
-  ---@type data.TechnologyPrototype[]
-  local techs = {}
-  for _, t in pairs(data.raw["technology"]) do
-    table.insert(techs, t)
-  end
-  -- it would be nice if this ordered techs so prerequisites generally came
-  -- first, but alas .order field is not maintained so you get quadratic perf yw
-  table.sort(techs, function(a, b) return (a.order or "") < (b.order or "") end)
-  local scans, steps = 0, 0
-  while #techs > 0 do
-    scans = scans + 1
-    for idx, tech in pairs(techs) do
-      steps = steps + 1
-      local prereqs = Set:new(tech.prerequisites)
-      for _, pname in pairs(tech.prerequisites or {}) do
-        local pre = tech_transitive_prerequisites[pname]
-        if not pre then goto continue end
-        for p in pairs(pre) do
-          prereqs:add { p }
+  function resolve(tech_name)
+    local stack, seen = { tech_name }, {}
+    while #stack > 0 do
+      local name = stack[#stack]
+
+      if tech_transitive_prerequisites[name] then
+        table.remove(stack)
+        goto continue
+      end
+
+      local prereqs, ok = Set:new(data.raw["technology"][name].prerequisites or {}), true
+      for _, pname in pairs(data.raw["technology"][name].prerequisites or {}) do
+        local pp = tech_transitive_prerequisites[pname]
+        if pp then
+          prereqs:union { pp }
+        else
+          ok = false
+          table.insert(stack, pname)
         end
       end
-      tech_transitive_prerequisites[tech.name] = prereqs
-      table.remove(techs, idx)
+
+      if ok then
+        tech_transitive_prerequisites[name] = prereqs
+        table.remove(stack)
+      end
+
+      if seen[name] and not ok then
+        log("cycle detected calculating technology prerequisites: " .. serpent.dump(stack))
+        tech_transitive_prerequisites = nil
+        return "error"
+      end
+      seen[name] = true
+
       ::continue::
     end
   end
-  log("calculated prerequisites in " .. scans .. " scans and " .. steps .. " steps")
+
+  for _, tech in pairs(data.raw["technology"]) do
+    if resolve(tech.name) == "error" then break end
+  end
 end
 
 -- Extract the IconData fields from a prototype's embedded icon fields
@@ -201,7 +214,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
   if turrettech then
     pre1 = { turrettech.name }
     unit1 = turrettech.unit
-    if not tech_transitive_prerequisites[turrettech.name][mil2.name] then
+    if tech_transitive_prerequisites == nil or not tech_transitive_prerequisites[turrettech.name][mil2.name] then
       table.insert(pre1, mil2.name)
       unit1 = util.merge { unit1, mil2.unit, { count = math.max(mil2.unit.count, unit1.count) } }
     end
@@ -225,7 +238,7 @@ for _, turret in pairs(data.raw["ammo-turret"]) do
   })
 
   local pre2, unit2 = { "loaded-turrets_" .. turret.name }, util.merge { unit1, { count = unit1.count * 2 } }
-  if turrettech and not tech_transitive_prerequisites[turrettech.name][mil3.name] then
+  if turrettech and (tech_transitive_prerequisites == nil or not tech_transitive_prerequisites[turrettech.name][mil3.name]) then
     table.insert(pre2, mil3.name)
     unit2 = util.merge { unit2, mil3.unit, { count = math.max(unit2.count, mil3.unit.count / 2) } }
   end

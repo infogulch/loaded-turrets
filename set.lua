@@ -50,11 +50,10 @@ function set:intersection(others)
 end
 
 function set:union(others)
-    local res = set:new(self:elements())
     for _, s in pairs(others) do
-        res:add(s:elements())
+        self:add(s:elements())
     end
-    return res
+    return self
 end
 
 function set:equal(others)
