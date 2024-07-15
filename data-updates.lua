@@ -135,7 +135,12 @@ end
 local subgroups, items, recipes, entities, technologies = {}, {}, {}, {}, {}
 
 for _, turret in pairs(data.raw["ammo-turret"]) do
-  local turretitem = data.raw["item"][first(items_by_placeresult[turret.name])]
+  local items = items_by_placeresult[turret.name]
+  if not items then
+    log("turret does not have an item that places it, skipping: " .. serpent.dump(turret))
+    goto continue
+  end
+  local turretitem = data.raw["item"][first(items)]
   local _, ammocategory = first(turret.attack_parameters.ammo_categories or
     { turret.attack_parameters.ammo_category or turret.attack_parameters.ammo_type.category })
   local ammos = ammo_by_category[ammocategory]
