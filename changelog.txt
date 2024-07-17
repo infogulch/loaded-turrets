@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+Date: 2024-07-17
+  Changes:
+    - Fix crash due to assuming that the tech tree has no cycles (yes it can while loading)
+    - Fix various issues related to not handling unusual cases
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: 2024-07-13
   Changes:
