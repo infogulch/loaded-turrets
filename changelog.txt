@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 2024-07-17
+  Changes:
+    - Support being constructed by script_raised_revive, in particular the Repair Turrets mod
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2024-07-17
   Changes:

@@ -27,9 +27,9 @@ script.on_event(defines.events.on_tick, function(event)
   global.insert_on_tick[event.tick] = nil
 end)
 
----@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_entity_cloned
+---@param event EventData.on_built_entity|EventData.on_robot_built_entity|EventData.on_entity_cloned|EventData.script_raised_revive
 function built(event)
-  local entity = event.created_entity or event.destination
+  local entity = event.created_entity or event.destination or event.entity
   local ammo_type, count = entity.name:match('^loaded[-]turrets_.*_(.*)_(%d+)$')
   if ammo_type then
     -- don't insert into a cloned entity unless the source is also pending
@@ -52,6 +52,7 @@ end
 script.on_event(defines.events.on_built_entity, built, { { filter = "turret" } })
 script.on_event(defines.events.on_robot_built_entity, built, { { filter = "turret" } })
 script.on_event(defines.events.on_entity_cloned, built, { { filter = "turret" } })
+script.on_event(defines.events.script_raised_revive, built, { { filter = "turret" } })
 
 ---@param event EventData.on_player_mined_entity|EventData.on_robot_mined_entity
 function mined(event)
